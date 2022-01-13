@@ -1,0 +1,215 @@
+import argparse
+import enum
+import pathlib
+import random
+import string
+import sys
+
+
+class SolverStarts(enum.Enum):
+    RANDOM = "random"
+    BEST = "best"
+    MANUAL = "manual"
+
+
+def count_letter(word: str, letter: str) -> int:
+    count = 0
+    for char in word:
+        if char == letter:
+            count += 1
+    return count
+
+
+class Solver:
+    def __init__(self, *, words: list[str], start: str):
+        self.words = words
+        self.guesses: list[str] = []
+        self.results: list[list[bool | None]] = []
+        self.start = SolverStarts(start)
+
+    def complete(self) -> str | None:
+        if len(self.results) == 6:
+            return "Sorry, too many attempts without a result"
+        if self.results and all(self.results[-1]):
+            return "Congrats, that's the right answer"
+        return None
+
+    def random_guess(self) -> str:
+        if not self.words:
+            raise ValueError(f"No more words to choose from")
+        if len(self.words) == 1:
+            return self.words[0]
+        return self.words[random.randint(0, len(self.words) - 1)]
+
+    def best_guess(self) -> str:
+        scores = []
+        for word in self.words:
+            count = {}
+            for letter in word:
+                count.setdefault(letter, 0)
+                count[letter] += 1
+            scores.append((word, len(count)))
+        scores.sort(key=lambda s: s[1], reverse=True)
+        return scores[0][0]
+
+    def first_guess(self) -> str:
+        if self.start == SolverStarts.RANDOM:
+            guess = self.random_guess()
+        if self.start == SolverStarts.BEST:
+            # https://old.reddit.com/r/wordle/comments/s2orah/finding_the_best_starting_word_using_a_brute/
+            guess = "raise"
+        elif self.start == SolverStarts.MANUAL:
+            guess = input("Input your first guess: ")
+            guess = guess.strip().lower()
+            while not guess or guess not in self.words:
+                guess = input("Input your first guess: ")
+        else:
+            raise ValueError(f"{self.start} starts are not yet implemented")
+
+        return guess
+
+    def next_guess(self) -> str:
+        guess = None
+        if not self.guesses:
+            guess = self.first_guess()
+        else:
+            guess = self.best_guess()
+
+        self.guesses.append(guess)
+        return guess
+
+    def filter_words(self, guess: str, result: list[bool | None]):
+        """Based on a guess and the result of that guess, filter the remaining words to only those that are possible."""
+
+        yellow_letters = {}
+        for idx, r in enumerate(result):
+            if r is None:
+                yellow_letters[guess[idx]] = idx
+
+        grey_letters = {}
+        for idx, r in enumerate(result):
+            grey_letters.setdefault(guess[idx], 0)
+            if r is None or r is True:
+                grey_letters[guess[idx]] += 1
+
+        remaining_words = []
+        for word in self.words:
+            good = word != guess
+
+            # Green letters must be in the word at the same location
+            for idx, r in enumerate(result):
+                if r is True and word[idx] != guess[idx]:
+                    good = False
+
+            # Yellow letters must be in word, but not at the same location
+            for letter, idx in yellow_letters.items():
+                if letter not in word or word[idx] == letter:
+                    good = False
+
+            # Grey letters must not be in word unless offset by yellow letters
+            for letter, count in grey_letters.items():
+                if count == 0 and letter in word:
+                    good = False
+
+            if good:
+                remaining_words.append(word)
+
+        self.words = remaining_words
+
+    def record_result(self, result: str) -> list[bool | None]:
+        if len(result) != 5 or result.lower().strip("yn?") != "":
+            raise ValueError(f"{result} is not a valid result")
+
+        converted_result: list[bool | None] = []
+        for col in result.lower():
+            if col == "y":
+                converted_result.append(True)
+            elif col == "n":
+                converted_result.append(False)
+            else:
+                converted_result.append(None)
+
+        self.results.append(converted_result)
+        return converted_result
+
+    def results_to_board(self) -> list[str]:
+        board = []
+        for result in self.results:
+            result_str = ""
+            for col in result:
+                if col is True:
+                    result_str += "🟩"
+                elif col is False:
+                    result_str += "⬜"
+                else:
+                    result_str += "🟨"
+            board.append(result_str)
+        return board
+
+    def play(self):
+        print(
+            f"Welcome to wordle_solver, {len(self.words)} words loaded!",
+            file=sys.stderr,
+        )
+        print("|  🟩 -> Y  |  ⬜ -> N  |  🟨 -> ?  |  New Guess -> R  |", file=sys.stderr)
+        print("", file=sys.stderr)
+
+        while not self.complete():
+            guess = self.next_guess()
+
+            while True:
+                try:
+                    result_input = input(f"Try '{guess}': ")
+                    if result_input.strip().lower() == "r":
+                        guess = self.next_guess()
+                    else:
+                        result = self.record_result(result_input)
+                        break
+                except ValueError as ex:
+
+                    print(ex, file=sys.stderr)
+
+            self.filter_words(guess, result)
+            print("\n".join(self.results_to_board()), file=sys.stderr)
+            print(f"{len(self.words)} remaining", file=sys.stderr)
+            print("", file=sys.stderr)
+        print(self.complete(), file=sys.stderr)
+
+
+def do_argparse() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("words_file")
+    parser.add_argument(
+        "--start", default=SolverStarts.RANDOM, choices=[s.value for s in SolverStarts]
+    )
+
+    return parser.parse_args()
+
+
+def load_words(path: str) -> list[str]:
+    words_path = pathlib.Path(path)
+    if not words_path.is_file():
+        raise ValueError(f"{path} is not a file")
+
+    words = words_path.read_text(encoding="utf-8").split("\n")
+
+    # Clean duplicates, words that aren't 5 characters, and words that aren't all ascii charaters
+    five_letter_words = set()
+    for word in words:
+        word = word.strip().lower()
+        if len(word) == 5 and not word.strip(string.ascii_lowercase):
+            five_letter_words.add(word)
+
+    return list(five_letter_words)
+
+
+def main():
+    args = do_argparse()
+
+    solver = Solver(words=load_words(args.words_file), start=args.start)
+    solver.play()
+
+
+if __name__ == "__main__":
+    main()
