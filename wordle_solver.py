@@ -77,7 +77,7 @@ class Solver:
         """
         if self.start == SolverStart.RANDOM:
             guess = self.random_guess()
-        if self.start == SolverStart.BEST:
+        elif self.start == SolverStart.BEST:
             # https://old.reddit.com/r/wordle/comments/s2orah/finding_the_best_starting_word_using_a_brute/
             guess = "raise"
         elif self.start == SolverStart.MANUAL:
@@ -249,7 +249,9 @@ def do_argparse() -> argparse.Namespace:
 
     parser.add_argument("words_file")
     parser.add_argument(
-        "--start", default=SolverStart.RANDOM, choices=[s.value for s in SolverStart]
+        "--start",
+        default=SolverStart.RANDOM.value,
+        choices=[s.value for s in SolverStart],
     )
 
     return parser.parse_args()
