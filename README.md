@@ -19,3 +19,9 @@ Inputs are case insensitive so `Y` or `y` will both work.
 | 🟨      | `?`             | Maybe **?** it's somewhere in the word |
 
 Input `R` if the generated guess was rejected by Wordle.
+
+## Example Game
+
+This example is based on Wordle 211 (2022-01-16):
+
+![Wordle 211 Example](./img/wordle_211_example.png)
