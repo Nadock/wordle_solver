@@ -1,3 +1,8 @@
+"""
+A puzzle solver for the word game "Wordle"
+
+https://www.powerlanguage.co.uk/wordle/
+"""
 import argparse
 import enum
 import pathlib
@@ -6,28 +11,35 @@ import string
 import sys
 
 
-class SolverStarts(enum.Enum):
+class SolverStart(enum.Enum):
+    """The posible starting conditions for the Wordle Solver."""
+
     RANDOM = "random"
     BEST = "best"
     MANUAL = "manual"
 
 
-def count_letter(word: str, letter: str) -> int:
-    count = 0
-    for char in word:
-        if char == letter:
-            count += 1
-    return count
-
-
 class Solver:
-    def __init__(self, *, words: list[str], start: str):
+    """
+    Solver for a game of Wordle.
+
+    Preload it with a list of possible words to use as guesses, then call the `play`
+    function to run the process of solving a Wordle puzzle.
+    """
+
+    def __init__(self, *, words: list[str], start: SolverStart):
         self.words = words
         self.guesses: list[str] = []
         self.results: list[list[bool | None]] = []
-        self.start = SolverStarts(start)
+        self.start = start
 
     def complete(self) -> str | None:
+        """
+        Check to see if the game is complete.
+
+        A return value of `None` indicates the game is not complete, a `str` return
+        value describes why the game is complete.
+        """
         if len(self.results) == 6:
             return "Sorry, too many attempts without a result"
         if self.results and all(self.results[-1]):
@@ -35,16 +47,23 @@ class Solver:
         return None
 
     def random_guess(self) -> str:
+        """Choose a random word from the remaining words as the next guess."""
         if not self.words:
-            raise ValueError(f"No more words to choose from")
+            raise ValueError("No more words to choose from")
         if len(self.words) == 1:
             return self.words[0]
         return self.words[random.randint(0, len(self.words) - 1)]
 
     def best_guess(self) -> str:
+        """
+        Choose the "best" possible guess to reduce the search space most effectively.
+
+        Currently the implementation selects a word with the most unique letters, of the
+         words remaining.
+        """
         scores = []
         for word in self.words:
-            count = {}
+            count: dict[str, int] = {}
             for letter in word:
                 count.setdefault(letter, 0)
                 count[letter] += 1
@@ -53,12 +72,15 @@ class Solver:
         return scores[0][0]
 
     def first_guess(self) -> str:
-        if self.start == SolverStarts.RANDOM:
+        """
+        Generate the first guess of the game, based on how to solver was configured.
+        """
+        if self.start == SolverStart.RANDOM:
             guess = self.random_guess()
-        if self.start == SolverStarts.BEST:
+        if self.start == SolverStart.BEST:
             # https://old.reddit.com/r/wordle/comments/s2orah/finding_the_best_starting_word_using_a_brute/
             guess = "raise"
-        elif self.start == SolverStarts.MANUAL:
+        elif self.start == SolverStart.MANUAL:
             guess = input("Input your first guess: ")
             guess = guess.strip().lower()
             while not guess or guess not in self.words:
@@ -69,6 +91,7 @@ class Solver:
         return guess
 
     def next_guess(self) -> str:
+        """Generate the next guess for the current game of Wordle"""
         guess = None
         if not self.guesses:
             guess = self.first_guess()
@@ -79,17 +102,20 @@ class Solver:
         return guess
 
     def filter_words(self, guess: str, result: list[bool | None]):
-        """Based on a guess and the result of that guess, filter the remaining words to only those that are possible."""
+        """
+        Based on a guess and the result of that guess, filter the remaining words to
+        only those that are possible.
+        """
 
         yellow_letters = {}
-        for idx, r in enumerate(result):
-            if r is None:
+        for idx, _result in enumerate(result):
+            if _result is None:
                 yellow_letters[guess[idx]] = idx
 
-        grey_letters = {}
-        for idx, r in enumerate(result):
+        grey_letters: dict[str, int] = {}
+        for idx, _result in enumerate(result):
             grey_letters.setdefault(guess[idx], 0)
-            if r is None or r is True:
+            if _result is None or _result is True:
                 grey_letters[guess[idx]] += 1
 
         remaining_words = []
@@ -97,8 +123,8 @@ class Solver:
             good = word != guess
 
             # Green letters must be in the word at the same location
-            for idx, r in enumerate(result):
-                if r is True and word[idx] != guess[idx]:
+            for idx, _result in enumerate(result):
+                if _result is True and word[idx] != guess[idx]:
                     good = False
 
             # Yellow letters must be in word, but not at the same location
@@ -117,6 +143,7 @@ class Solver:
         self.words = remaining_words
 
     def record_result(self, result: str) -> list[bool | None]:
+        """Record an inputted result from the user."""
         if len(result) != 5 or result.lower().strip("yn?") != "":
             raise ValueError(f"{result} is not a valid result")
 
@@ -133,6 +160,10 @@ class Solver:
         return converted_result
 
     def results_to_board(self) -> list[str]:
+        """
+        Convert the stored results to the emoji board Wordle uses to represent the
+        gamestate.
+        """
         board = []
         for result in self.results:
             result_str = ""
@@ -147,6 +178,7 @@ class Solver:
         return board
 
     def play(self):
+        """Play a game of Wordle"""
         print(
             f"Welcome to wordle_solver, {len(self.words)} words loaded!",
             file=sys.stderr,
@@ -176,25 +208,32 @@ class Solver:
         print(self.complete(), file=sys.stderr)
 
 
-def do_argparse() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("words_file")
-    parser.add_argument(
-        "--start", default=SolverStarts.RANDOM, choices=[s.value for s in SolverStarts]
-    )
-
-    return parser.parse_args()
+def count_letter(word: str, letter: str) -> int:
+    """Count the number of times the `letter` appears in the given `word`."""
+    count = 0
+    for char in word:
+        if char == letter:
+            count += 1
+    return count
 
 
 def load_words(path: str) -> list[str]:
+    """
+    Load a words file and return the list of individual words.
+
+    A words file must be a plaintext UTF-8 file with each new word delimited by a
+    newline.
+
+    Any words that aren't exactly 5 English characters in length are filtered out.
+    """
     words_path = pathlib.Path(path)
     if not words_path.is_file():
         raise ValueError(f"{path} is not a file")
 
     words = words_path.read_text(encoding="utf-8").split("\n")
 
-    # Clean duplicates, words that aren't 5 characters, and words that aren't all ascii charaters
+    # Clean duplicates, words that aren't 5 characters, and words that aren't all
+    # ascii charaters
     five_letter_words = set()
     for word in words:
         word = word.strip().lower()
@@ -204,10 +243,23 @@ def load_words(path: str) -> list[str]:
     return list(five_letter_words)
 
 
+def do_argparse() -> argparse.Namespace:
+    """Parse CLI arguments with `argparse`, returning the parsed options."""
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("words_file")
+    parser.add_argument(
+        "--start", default=SolverStart.RANDOM, choices=[s.value for s in SolverStart]
+    )
+
+    return parser.parse_args()
+
+
 def main():
+    """Parse args and run the Wordle Solver."""
     args = do_argparse()
 
-    solver = Solver(words=load_words(args.words_file), start=args.start)
+    solver = Solver(words=load_words(args.words_file), start=SolverStart(args.start))
     solver.play()
 
 
