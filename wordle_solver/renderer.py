@@ -117,12 +117,20 @@ class RichWordleRenderer:
         self._render_gamestate()
         if len(self.solver.guesses) == 6:
             self.console.print("Maximum guesses exceeded")
-        if len(self.solver.words) == 1:
+        elif len(self.solver.words) == 1:
             self.console.print(
                 f"The answer is '[bold green]{self.solver.words[0]}[/bold green]'"
             )
-        if not self.solver.words:
-            self.console.print("No valid words remain, check your guesses and answers")
+        elif all(a == constants.CORRECT for a in self.solver.answers[-1].parts):
+            self.console.print(
+                f"The answer is '[bold green]{self.solver.guesses[-1]}[/bold green]'"
+            )
+        elif not self.solver.words:
+            self.error_console.print(
+                "No valid words remain, check your guesses and answers"
+            )
+        else:
+            self.error_console.print("Unexpected end of game")
 
     def _prompt_action(self) -> _Action | None:
         """Prompt the user for an action."""
