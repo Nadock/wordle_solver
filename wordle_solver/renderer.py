@@ -11,7 +11,7 @@ from . import constants, solver, version
 class _Action:
     symbol: str
     label: str
-    action: Callable
+    action: Callable[[], bool]
 
 
 class RichWordleRenderer:
@@ -30,7 +30,7 @@ class RichWordleRenderer:
             _Action("Q", "Quit", self._action_quit),
         ]
 
-    def solve(self):
+    def solve(self) -> None:
         """Run the solver until the game is complete."""
         if not self.console.is_interactive:
             self.error_console.print(
@@ -52,14 +52,14 @@ class RichWordleRenderer:
 
         self._render_endgame()
 
-    def remaining(self):
+    def remaining(self) -> None:
         """Display the remaining words."""
         if not self.console.is_interactive:
             self.console.print("\n".join(self.solver.words))
         else:
             self.console.print(*self.solver.words)
 
-    def suggest(self):
+    def suggest(self) -> None:
         """Suggest one word as a guess."""
         guess = self.solver.next_word()
         if not self.console.is_interactive:
@@ -67,7 +67,7 @@ class RichWordleRenderer:
         else:
             self.console.print(f"Try '[bold yellow]{guess}[/bold yellow]'")
 
-    def _render_header(self):
+    def _render_header(self) -> None:
         """Render the header message to the console."""
         _table = table.Table.grid()
         _table.add_column(justify="center")
@@ -90,7 +90,7 @@ class RichWordleRenderer:
         self.console.print(_table)
         self.console.print()
 
-    def _render_gamestate(self):
+    def _render_gamestate(self) -> None:
         """Render the current gamestate to the console"""
         if not self.solver.guesses:
             return
@@ -112,7 +112,7 @@ class RichWordleRenderer:
         )
         self.console.print()
 
-    def _render_endgame(self):
+    def _render_endgame(self) -> None:
         """Render the end of game message to the console."""
         self._render_gamestate()
         if len(self.solver.guesses) == 6:

@@ -28,7 +28,7 @@ class Answer:
 
     parts: list[AnswerPart]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if len(self.parts) != 5:
             raise ValueError(f"An {self.__class__.__name__} must have exactly 5 parts")
 

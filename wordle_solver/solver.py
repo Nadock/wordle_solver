@@ -13,8 +13,8 @@ class WordleSolver:
 
     def __init__(
         self,
-        guesses: list[str] = None,
-        answers: list[constants.Answer] = None,
+        guesses: list[str] | None = None,
+        answers: list[constants.Answer] | None = None,
         hard_mode: bool = False,
     ):
         self.words = words.ALL_WORDS.copy()
@@ -66,7 +66,7 @@ class WordleSolver:
 
         return max_word
 
-    def add_answer(self, *, guess: str, answer: constants.Answer):
+    def add_answer(self, *, guess: str, answer: constants.Answer) -> None:
         """Add an `guess` and `answer` combination to the current game."""
         if len(guess) != 5:
             raise ValueError("Guesses must be 5 letters long")

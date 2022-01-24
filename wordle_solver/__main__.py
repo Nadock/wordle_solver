@@ -3,7 +3,7 @@ import sys
 from . import cli, renderer
 
 
-def main():
+def main() -> None:
     """Parse CLI args and run wordle_solver"""
     args = cli.parse_cli_args()
     render = renderer.RichWordleRenderer(args)
