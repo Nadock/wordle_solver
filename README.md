@@ -68,4 +68,4 @@ on startup in interactive mode.
 
 This example is based on Wordle 219 (2022-01-24):
 
-![Wordle 211 Example](./img/wordle_219_example.png)
+![Wordle 219 Example](./img/wordle_219_example.png)
