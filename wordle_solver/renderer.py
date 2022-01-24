@@ -121,7 +121,7 @@ class RichWordleRenderer:
             self.console.print(
                 f"The answer is '[bold green]{self.solver.words[0]}[/bold green]'"
             )
-        elif all([a == constants.CORRECT for a in self.solver.answers[-1].parts]):
+        elif all(a == constants.CORRECT for a in self.solver.answers[-1].parts):
             self.console.print(
                 f"The answer is '[bold green]{self.solver.guesses[-1]}[/bold green]'"
             )
