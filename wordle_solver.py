@@ -27,11 +27,12 @@ class Solver:
     function to run the process of solving a Wordle puzzle.
     """
 
-    def __init__(self, *, words: list[str], start: SolverStart):
+    def __init__(self, *, words: list[str], start: SolverStart, show_all: bool = False):
         self.words = words
         self.guesses: list[str] = []
         self.results: list[list[bool | None]] = []
         self.start = start
+        self.show_all = show_all
 
     def complete(self) -> str | None:
         """
@@ -204,6 +205,15 @@ class Solver:
             self.filter_words(guess, result)
             print("\n".join(self.results_to_board()), file=sys.stderr)
             print(f"{len(self.words)} remaining", file=sys.stderr)
+            if self.show_all:
+                all_str = ""
+                for idx, word in enumerate(self.words):
+                    if idx % 20 == 0 and idx != 0:
+                        all_str += "\n"
+                    all_str += word
+                    if idx + 1 != len(self.words):
+                        all_str += "\t"
+                print(all_str)
             print("", file=sys.stderr)
         print(self.complete(), file=sys.stderr)
 
@@ -253,6 +263,7 @@ def do_argparse() -> argparse.Namespace:
         default=SolverStart.RANDOM.value,
         choices=[s.value for s in SolverStart],
     )
+    parser.add_argument("--show-all", default=False, action="store_true")
 
     return parser.parse_args()
 
@@ -261,7 +272,11 @@ def main():
     """Parse args and run the Wordle Solver."""
     args = do_argparse()
 
-    solver = Solver(words=load_words(args.words_file), start=SolverStart(args.start))
+    solver = Solver(
+        words=load_words(args.words_file),
+        start=SolverStart(args.start),
+        show_all=args.show_all,
+    )
     solver.play()
 
 
