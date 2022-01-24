@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 ALL_WORDS = [
     "aahed",
     "aalii",

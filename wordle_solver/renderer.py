@@ -1,10 +1,10 @@
-import dataclasses
 import argparse
+import dataclasses
 from typing import Callable
 
-from rich import console, table, panel
+from rich import console, panel, table
 
-from wordle_solver import __program__, __version__, constants, solver
+from . import constants, solver, version
 
 
 @dataclasses.dataclass
@@ -33,7 +33,9 @@ class RichWordleRenderer:
     def solve(self):
         """Run the solver until the game is complete."""
         if not self.console.is_interactive:
-            self.error_console.print(f"{__program__} is running in interactive mode")
+            self.error_console.print(
+                f"{version.__program__} is running in interactive mode"
+            )
             return
 
         self._render_header()
@@ -69,7 +71,7 @@ class RichWordleRenderer:
         """Render the header message to the console."""
         _table = table.Table.grid()
         _table.add_column(justify="center")
-        _table.add_row(f"{__program__} (v{__version__})")
+        _table.add_row(f"{version.__program__} (v{version.__version__})")
         _table.add_row(
             (
                 f"| {constants.CORRECT.emoji} -> {constants.CORRECT.symbol} | "
@@ -176,7 +178,7 @@ class RichWordleRenderer:
 
         return self._guess(guess=guess, answer=answer)
 
-    def _action_quit(self) -> bool:
+    def _action_quit(self) -> bool:  # pylint: disable=no-self-use
         """Quit action"""
         raise KeyboardInterrupt
 
