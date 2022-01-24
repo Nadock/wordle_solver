@@ -1,0 +1,38 @@
+name: Code Checks
+
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+
+jobs:
+  code_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python
+        with:
+          version: "3.10"
+
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install pipenv
+          pipenv install
+
+      - name: Black
+        run: pipenv run isort --check wordle_solver
+
+      - name: Black
+        run: pipenv run black --check wordle_solver
+
+      - name: Pylint
+        run: pipenv run pylint wordle_solver
+
+      - name: Mypy
+        run: pipenv run mypy wordle_solver --strict --show-error-codes
