@@ -1,8 +1,8 @@
 # Wordle Solver
 
 <!-- HTML here because we want centre alignment -->
+<p align="center"><i>An interactive solver tool for <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>.</i></p>
 <p align="center">
-    <p>An solver tool for <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>.</p>
     <a href="https://github.com/Nadock/wordle_solver/actions/workflows/code_checks.yml">
         <img alt="PR Checks" src="https://github.com/Nadock/wordle_solver/actions/workflows/code_checks.yml/badge.svg">
     </a>
