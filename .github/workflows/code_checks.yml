@@ -25,7 +25,7 @@ jobs:
           python3 -m pip install pipenv
           pipenv install
 
-      - name: Black
+      - name: Isortp
         run: pipenv run isort --check wordle_solver
 
       - name: Black
