@@ -62,15 +62,42 @@ class Solver:
         Currently the implementation selects a word with the most unique letters, of the
          words remaining.
         """
-        scores = []
+        # Find the most common remaining letters
+        letter_counts = {}
         for word in self.words:
-            count: dict[str, int] = {}
-            for letter in word:
-                count.setdefault(letter, 0)
-                count[letter] += 1
-            scores.append((word, len(count)))
-        scores.sort(key=lambda s: s[1], reverse=True)
-        return scores[0][0]
+            for letter in set(word):
+                letter_counts.setdefault(letter, 0)
+                letter_counts[letter] += 1
+
+        print(f"{letter_counts=}")
+
+        # Score each word based on how common each of it's letters are
+        word_scores = {}
+        for word in self.words:
+            score = 0
+            for letter in set(word):
+                score += letter_counts[letter]
+            word_scores[word] = score
+
+        # Find the highest scoring word
+        max_word = self.words[0]
+        max_score = word_scores[max_word]
+        for word, score in word_scores.items():
+            if score > max_score:
+                max_score = score
+                max_word = word
+
+        return max_word
+
+        # scores = []
+        # for word in self.words:
+        #     count: dict[str, int] = {}
+        #     for letter in word:
+        #         count.setdefault(letter, 0)
+        #         count[letter] += 1
+        #     scores.append((word, len(count)))
+        # scores.sort(key=lambda s: s[1], reverse=True)
+        # return scores[0][0]
 
     def first_guess(self) -> str:
         """
