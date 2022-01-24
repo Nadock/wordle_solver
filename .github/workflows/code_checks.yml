@@ -23,9 +23,9 @@ jobs:
       - name: Install Dependencies
         run: |
           python3 -m pip install pipenv
-          pipenv install
+          pipenv install --dev
 
-      - name: Isortp
+      - name: Isort
         run: pipenv run isort --check wordle_solver
 
       - name: Black
