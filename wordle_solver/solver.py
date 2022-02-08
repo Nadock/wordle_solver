@@ -53,18 +53,38 @@ class WordleSolver:
                 letter_counts.setdefault(letter, 0)
                 letter_counts[letter] += 1
 
-        max_score = -1
-        max_word = self.words[0]
-        search_words = self.words if self.hard_mode else words.ALL_WORDS
-        for word in search_words:
-            score = 0
-            for letter in set(word):
-                score += letter_counts.get(letter, 0)
-            if score > max_score:
-                max_score = score
-                max_word = word
+        word_scores = [(word, score) for word, score in self._score_words().items()]
+        word_scores.sort(key=lambda ws: ws[1], reverse=True)
+        return word_scores[0][0]
 
-        return max_word
+    def _score_words(self) -> dict[str, int]:
+        """
+        Score each remaining word according to how well it matches the existing guesses.
+        """
+        guesses = self.words if self.hard_mode else words.ALL_WORDS
+        answers = self.words
+        scores: dict[str, int] = {}
+
+        for answer in answers:
+            for guess in guesses:
+                score = 0
+                letters = []
+                for idx, letter in enumerate(guess):
+                    # duplicates=-1, green=5, yellow=3, grey=1
+                    if letter in letters:
+                        score += -1
+                    if answer[idx] == letter:
+                        score = 5
+                    elif letter in answer:
+                        score += 3
+                    else:
+                        score += 1
+                    letters.append(letter)
+
+                scores.setdefault(guess, 0)
+                scores[guess] += score
+
+        return scores
 
     def add_answer(self, *, guess: str, answer: constants.Answer) -> None:
         """Add an `guess` and `answer` combination to the current game."""
